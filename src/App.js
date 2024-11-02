@@ -1,25 +1,59 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+import { getContacts, addContact, updateContact, deleteContact } from './/contacts';
+import ContactList from './components/ContactList';
+import ContactForm from './components/ContactForm';
 
-function App() {
+const App = () => {
+  const [contacts, setContacts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedContact, setSelectedContact] = useState(null);
+
+  const fetchContacts = async () => {
+    try {
+      const response = await getContacts();
+      setContacts(response.data);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+    }
+  };
+
+
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  const handleAddOrUpdateContact = async (contactData) => {
+    if (selectedContact) {
+      await updateContact(selectedContact.id, contactData);
+      setSelectedContact(null);  
+    } else {
+      await addContact(contactData);
+    }
+    fetchContacts();  
+  };
+
+  const handleDeleteContact = async (id) => {
+    await deleteContact(id);
+    fetchContacts(); 
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className='col-8 p-5'>
+      <input
+        type="text"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Search by name"
+      />
+      <ContactList
+        contacts={contacts}
+        onEdit={setSelectedContact}
+        onDelete={handleDeleteContact}
+        searchQuery={searchQuery}
+      />
+      <ContactForm onSave={handleAddOrUpdateContact} contact={selectedContact} />
     </div>
   );
-}
+};
 
 export default App;
